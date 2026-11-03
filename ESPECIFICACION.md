@@ -36,9 +36,12 @@ listo para cargar en el gestor de anuncios.
 
 ## 4. Qué pieza de IA usa
 La API de Gemini (modelos `gemini-2.0-flash` / `gemini-2.5-flash`) con salida JSON
-forzada, orquestada como cuatro agentes con roles y contratos distintos y un bucle de
-control: lo que QA rechaza o excede el límite de caracteres (comprobado también en
-código, no solo por el modelo) se vuelve a generar hasta dos veces. Se eligió un LLM
+forzada y razonamiento interno desactivado (más rápido), orquestada como cuatro agentes
+con roles y contratos distintos: los lotes del copywriter se piden en paralelo (hasta 8
+llamadas simultáneas), QA revisa un lote por canal, y lo que QA rechaza o excede el límite
+de caracteres (comprobado también en código, no solo por el modelo) se vuelve a generar
+hasta en tres rondas. La lista de modelos se consulta a la API con la clave del usuario,
+para que los cambios de nombre de Google no rompan la app. Se eligió un LLM
 por API y no un modelo de Hugging Face porque la tarea es generación de texto creativo
 en español con instrucciones complejas, donde un modelo pequeño local no da calidad;
 Gemini tiene nivel gratuito, es el asistente del curso y su modo JSON simplifica el
@@ -57,8 +60,8 @@ flujo completo (es la versión 0, sin IA real).
 
 ## 6. Criterios de aceptación
 1. Con el brief de ejemplo, 2 canales, 4 ángulos y 5 variantes, la app termina en menos
-   de 3 minutos con Gemini (menos de 10 segundos en modo demo) y muestra 40 copies
-   aprobados.
+   de 90 segundos con Gemini (menos de 10 segundos en modo demo) y muestra 40 copies
+   aprobados, con el rastreador de los 4 agentes marcando cada etapa.
 2. Ningún copy aprobado supera el límite de caracteres de su campo (verificable en la
    columna `errores_formato`, que debe estar vacía en los aprobados).
 3. Ningún copy aprobado contiene un claim de la lista de prohibidos del brief; los que

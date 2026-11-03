@@ -4,7 +4,8 @@ Oscar Solano Brenes · Reto del módulo Python para IA · Máster en Inteligenci
 
 Cargás un brief, elegís canales y volumen, y un pipeline de cuatro agentes
 (analista → estratega → copywriter → QA) devuelve el lote de copies revisado, con
-límites de caracteres por formato y claims prohibidos bloqueados, descargable en Excel/CSV.
+límites de caracteres por formato y claims prohibidos bloqueados, en tarjetas y tabla,
+descargable en Excel/CSV. Los lotes se generan en paralelo (ajustable en la barra lateral).
 
 ## Archivos
 | Archivo | Qué es |
@@ -45,3 +46,8 @@ Cada `git push` a `main` redespliega automáticamente.
 - **Qué hará la app**: brief → ángulos → copies por canal y formato → QA/compliance → Excel, en minutos.
 - **Pieza de IA**: API de Gemini orquestada como 4 agentes con salida JSON y bucle de regeneración.
 - **Versión 0**: `https://<nombre>.streamlit.app` (modo demo sin clave; con clave, Gemini real).
+
+## Si va lento o da errores de cuota
+El nivel gratuito de Gemini limita las peticiones por minuto. Bajá **Llamadas en paralelo**
+a 2 y, para la primera prueba, usá 2 canales, 3 ángulos y 4 variantes. Si un modelo da
+404, elegí otro del desplegable: la lista sale de tu clave.

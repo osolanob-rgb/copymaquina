@@ -7,8 +7,10 @@ performance a partir de un brief, mediante un pipeline de cuatro agentes LLM
 regeneración. Proyecto del reto del módulo Python para IA (Máster en IA).
 
 ## Estructura
-- `app.py` — todo: límites por canal, cliente LLM (Gemini real y `DemoLLM`), los cuatro
-  agentes, el orquestador `ejecutar_pipeline`, lectura de briefs y la interfaz.
+- `app.py` — todo: límites por canal (`CANALES`), cliente LLM (`GeminiLLM` y `DemoLLM`),
+  los cuatro agentes, el orquestador `ejecutar_pipeline` (paralelo con
+  `ThreadPoolExecutor`), lectura de briefs, el CSS de la interfaz (`CSS`) y las tarjetas
+  HTML (`html_kpis`, `html_agentes`, `html_copy_card`).
 - `ejemplos/brief_ejemplo.md` — brief ficticio para demos y pruebas.
 - `requirements.txt`, `.streamlit/config.toml`, `.streamlit/secrets.toml.example`.
 - `ESPECIFICACION.md` — especificación de 6 secciones; los criterios de aceptación
@@ -35,6 +37,14 @@ Para usar Gemini en local: copiá `secrets.toml.example` a `secrets.toml` y pon�
 - `verificar_limites` es la comprobación determinista de longitud: se ejecuta siempre,
   aunque el modelo diga que cumplió. No la quites.
 - Usar `width="stretch"` en vez de `use_container_width` (Streamlit ≥ 1.50).
+- `magicEnabled = false` en `.streamlit/config.toml`: Streamlit no debe imprimir el
+  resultado de expresiones sueltas. Aun así, evitá expresiones sueltas que devuelvan
+  `None` (`time.sleep`, `set.update`): asignalas a `_`.
+- Nunca llames a `st.*` desde los hilos del pool: los avisos de progreso (`avisar`) se
+  emiten desde el hilo principal en el bucle de `as_completed`.
+- `GeminiLLM` desactiva el razonamiento interno (`thinking_budget=0`) y, si el modelo lo
+  rechaza, sigue sin ese ajuste. `listar_modelos` obtiene los modelos de la clave;
+  `MODELOS_RESPALDO` es solo el fallback.
 - Nuevas funciones del LLM: implementarlas en `GeminiLLM` **y** en `DemoLLM` para que el
   modo demo siga cubriendo el flujo completo.
 
