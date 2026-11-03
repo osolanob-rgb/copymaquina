@@ -80,11 +80,35 @@ def _extraer_json(texto: str):
         return json.loads(limpio[inicio:fin])
 
 
+MODELOS_RESPALDO = ["gemini-3.8-flash", "gemini-2.0-flash"]  # por si la consulta de modelos falla
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def listar_modelos(api_key: str) -> list[str]:
+    """Pregunta a la API qué modelos puede usar esta clave (los nombres cambian con el tiempo)."""
+    try:
+        from google import genai
+        cliente = genai.Client(api_key=api_key)
+        nombres = []
+        for m in cliente.models.list():
+            acciones = getattr(m, "supported_actions", None) or []
+            if acciones and "generateContent" not in acciones:
+                continue
+            nombre = m.name.replace("models/", "")
+            if "gemini" in nombre and "embedding" not in nombre and "tts" not in nombre and "image" not in nombre:
+                nombres.append(nombre)
+        # flash primero (rápidos y baratos), luego el resto, sin duplicados
+        flash = [n for n in nombres if "flash" in n]
+        return list(dict.fromkeys(flash + nombres)) or MODELOS_RESPALDO
+    except Exception:
+        return MODELOS_RESPALDO
+
+
 class GeminiLLM:
     """Llamadas a Gemini con salida JSON forzada. La clave nunca se escribe en el código:
     viene de st.secrets (en el despliegue) o de la barra lateral (sesión, no se guarda)."""
 
-    def __init__(self, api_key: str, modelo: str = "gemini-2.0-flash"):
+    def __init__(self, api_key: str, modelo: str = MODELOS_RESPALDO[0]):
         from google import genai  # import tardío para que el modo demo no lo necesite
         self.cliente = genai.Client(api_key=api_key)
         self.modelo = modelo
@@ -342,12 +366,18 @@ with st.sidebar:
         clave_secreta = ""
     clave = clave_secreta or st.text_input("Clave de Gemini (opcional, solo esta sesión)", type="password",
                                            help="Se obtiene gratis en aistudio.google.com. No se guarda.")
-    modelo = st.selectbox("Modelo", ["gemini-2.0-flash", "gemini-2.5-flash"], index=0)
     modo_demo = not clave
     if modo_demo:
+        modelo = MODELOS_RESPALDO[0]
         st.info("Sin clave: **modo demo** con un LLM simulado. El flujo es el real; los textos, de muestra.")
     else:
-        st.success("Gemini conectado.")
+        modelos = listar_modelos(clave)
+        modelo = st.selectbox("Modelo", modelos, index=0,
+                              help="Lista obtenida de tu clave de Gemini. Los nombres cambian con el tiempo.")
+        otro = st.text_input("…u otro nombre de modelo (opcional)", placeholder="p. ej. gemini-3.8-flash")
+        if otro.strip():
+            modelo = otro.strip()
+        st.success(f"Gemini conectado · {modelo}")
 
     st.header("Volumen")
     canales = st.multiselect("Canales", list(CANALES), default=list(CANALES)[:2])
